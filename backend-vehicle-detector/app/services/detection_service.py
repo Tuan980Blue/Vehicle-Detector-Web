@@ -5,9 +5,62 @@ from typing import List, Tuple, Dict, Optional
 from pathlib import Path
 import cv2
 import numpy as np
+import torch.serialization
+import torch.nn.modules.container
+import torch.nn.modules.conv
+import torch.nn.modules.batchnorm
+import torch.nn.modules.activation
+import torch.nn.modules.pooling
+import torch.nn.modules.upsampling
+import torch.nn.modules.dropout
+import torch.nn.modules.linear
+import torch.nn.modules.normalization
+import torch.nn.modules.padding
+import torch.nn.modules.flatten
+import torch.nn
 from ultralytics import YOLO
+from ultralytics.nn.tasks import DetectionModel
+from ultralytics.nn.modules.conv import Conv, Concat
+from ultralytics.nn.modules.block import C2f, Bottleneck, BottleneckCSP, SPP, SPPF, DFL
+from ultralytics.nn.modules.head import Detect
 from ..core.config import settings
 from ..models.detection import DetectionResult, BoundingBox, DetectionTask, DetectionStats
+
+# Add required classes to safe globals
+torch.serialization.add_safe_globals([
+    DetectionModel,
+    Conv,
+    Concat,
+    C2f,
+    Bottleneck,
+    BottleneckCSP,
+    SPP,
+    SPPF,
+    DFL,
+    Detect,
+    torch.nn.modules.container.Sequential,
+    torch.nn.modules.container.ModuleList,
+    torch.nn.modules.container.ModuleDict,
+    torch.nn.modules.conv.Conv2d,
+    torch.nn.modules.conv.ConvTranspose2d,
+    torch.nn.modules.batchnorm.BatchNorm2d,
+    torch.nn.modules.activation.SiLU,
+    torch.nn.modules.activation.ReLU,
+    torch.nn.modules.activation.LeakyReLU,
+    torch.nn.modules.activation.Hardswish,
+    torch.nn.modules.pooling.MaxPool2d,
+    torch.nn.modules.pooling.AdaptiveAvgPool2d,
+    torch.nn.modules.pooling.AvgPool2d,
+    torch.nn.modules.upsampling.Upsample,
+    torch.nn.modules.dropout.Dropout,
+    torch.nn.modules.dropout.Dropout2d,
+    torch.nn.modules.linear.Linear,
+    torch.nn.modules.normalization.LayerNorm,
+    torch.nn.modules.normalization.GroupNorm,
+    torch.nn.modules.padding.ZeroPad2d,
+    torch.nn.modules.flatten.Flatten,
+    torch.nn.AdaptiveMaxPool2d,
+])
 
 class DetectionService:
     def __init__(self):

@@ -130,7 +130,7 @@ class DetectionService:
                 2
             )
         
-        # Save processed image
+        # Save processed image tttt
         output_filename = f"processed_{Path(image_path).name}"
         output_path = os.path.join(settings.OUTPUT_DIR, output_filename)
         cv2.imwrite(output_path, img)

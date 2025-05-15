@@ -1,0 +1,56 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Python files
+*.py text diff=python
+*.pyw text diff=python
+*.pyi text diff=python
+
+# JavaScript/TypeScript files
+*.js text diff=javascript
+*.jsx text diff=javascript
+*.ts text diff=typescript
+*.tsx text diff=typescript
+*.json text
+*.css text
+*.scss text
+*.html text diff=html
+
+# Documentation
+*.md text diff=markdown
+*.rst text
+*.txt text
+
+# Configs
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.env text
+*.env.* text
+
+# Graphics
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+*.webp binary
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Models and large binary files
+*.h5 binary
+*.pkl binary
+*.model binary
+*.bin binary
+*.weights binary
+
+# Exclude files from exporting
+.gitattributes export-ignore
+.gitignore export-ignore 

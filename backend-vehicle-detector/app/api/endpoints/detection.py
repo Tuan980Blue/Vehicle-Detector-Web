@@ -1,6 +1,7 @@
 import os
+import json
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Form
 from fastapi.responses import FileResponse
 from ...services.detection_service import detection_service
 from ...models.detection import (
@@ -15,11 +16,11 @@ router = APIRouter()
 async def process_image(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    target_classes: Optional[List[VehicleClass]] = Query(
+    target_classes: Optional[str] = Form(
         None,
-        description="List of vehicle classes to detect. If not provided, defaults to car and motorcycle."
+        description="JSON string of vehicle classes to detect. If not provided, defaults to car and motorcycle."
     ),
-    min_confidence: float = Query(
+    min_confidence: float = Form(
         0.5,
         ge=0.0,
         le=1.0,
@@ -29,6 +30,24 @@ async def process_image(
     """
     Upload and process an image for vehicle detection with optional filtering
     """
+    # Parse target_classes from JSON string if provided
+    parsed_target_classes = None
+    if target_classes:
+        try:
+            parsed_target_classes = json.loads(target_classes)
+            if not isinstance(parsed_target_classes, list):
+                raise ValueError("target_classes must be a list")
+            parsed_target_classes = [VehicleClass(cls) for cls in parsed_target_classes]
+        except (json.JSONDecodeError, ValueError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid target_classes format: {str(e)}"
+            )
+    
+    # Debug logging
+    print("Received target_classes:", parsed_target_classes)
+    print("Received min_confidence:", min_confidence)
+    
     # Validate file type
     if not file.content_type.startswith('image/'):
         raise HTTPException(
@@ -38,9 +57,10 @@ async def process_image(
     
     # Create filter with default values if target_classes is None
     filter = VehicleFilter(
-        target_classes=set(target_classes) if target_classes is not None else None,
+        target_classes=set(parsed_target_classes) if parsed_target_classes is not None else None,
         min_confidence=min_confidence
     )
+    print("Created filter:", filter)
     
     # Save uploaded file
     file_path = os.path.join(settings.UPLOAD_DIR, file.filename)
@@ -51,8 +71,10 @@ async def process_image(
     try:
         # Process image with filter
         result = detection_service.process_file(file_path, filter)
+        print("Processing result:", result)
         return result
     except Exception as e:
+        print("Processing error:", str(e))
         raise HTTPException(
             status_code=500,
             detail=str(e)
@@ -65,11 +87,11 @@ async def process_image(
 async def process_video(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    target_classes: Optional[List[VehicleClass]] = Query(
+    target_classes: Optional[List[VehicleClass]] = Form(
         None,
         description="List of vehicle classes to detect. If not provided, defaults to car and motorcycle."
     ),
-    min_confidence: float = Query(
+    min_confidence: float = Form(
         0.5,
         ge=0.0,
         le=1.0,

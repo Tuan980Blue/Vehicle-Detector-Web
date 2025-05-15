@@ -1,37 +1,57 @@
 # 🌐 Vehicle-Detector-Web
-![image](https://github.com/user-attachments/assets/f7f7fd52-099d-4a8d-9cac-e74d7d3accc7)
 
-# 🌐 [Link-PreView-Web](https://anhtuandev.id.vn/)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f7f7fd52-099d-4a8d-9cac-e74d7d3accc7" width="500"/>
+  <img src="https://github.com/user-attachments/assets/5a59ab9e-5116-4adf-a13a-d9634e82fa39" width="500"/>
+</p>
 
-**Vehicel Detector** là một nền tảng nhận diện phương tiện thời gian thực được xây dựng với FastAPI , nơi người dùng có thể phân biệt, thông tin phương tiện và cập nhật kết quả ngay lập tức!
+
+## 🌍 [Xem bản demo tại đây](https://anhtuandev.id.vn/)
+
+**Vehicle Detector** là một nền tảng nhận diện phương tiện thời gian thực được xây dựng bằng **FastAPI** kết hợp với **YOLOv8**, cho phép người dùng phân loại phương tiện, hiển thị thông tin chi tiết và cập nhật kết quả gần như ngay lập tức.
+
+---
 
 ## 🚀 Tính năng nổi bật
 
-- 🔥 **Giao tiếp thời gian thực** – Phản hồi và kết quả được cập nhật ngay lập tức.
-- 🔒 **Xác thực người dùng**
-- 📱 **Responsive UI** – Giao diện đẹp, mượt mà trên mọi thiết bị.
+- ⚡ **Nhận diện thời gian thực** – Phản hồi và kết quả được cập nhật ngay lập tức.
+- 🔒 **Xác thực người dùng** – Bảo mật truy cập và dữ liệu.
+- 📱 **Giao diện thân thiện, Responsive** – Hiển thị tốt trên cả desktop và thiết bị di động.
+
+---
 
 ## 🧱 Công nghệ sử dụng
 
-- **Backend**:  FastAPI sau khi xử lý ảnh bằng YOLOv8
+- **Backend**: FastAPI + YOLOv8 (Xử lý ảnh)
 - **Frontend**: React
-- **Database**: MongoDB 
-- **Auth**:  
+- **Cơ sở dữ liệu**: MongoDB
+- **Xác thực**: (bạn nên bổ sung, ví dụ: JWT, OAuth2, v.v.)
 
-### 🚀 Work Follow Chat Online
+---
 
+## 🌐 Triển khai hệ thống
 
-### 🚀 📝 State Message Chat Online
+### 🔧 Frontend
+- Deploy trên **Vercel**
+- Hỗ trợ CI/CD tự động
 
+### 🔧 Backend
+- Deploy trên **Render**
+- Dễ dàng tích hợp với MongoDB
+- Có hỗ trợ **SSL miễn phí**
 
-## setup cho dự án :
-Frontend: Deploy trên Vercel
-Có CI/CD tự động
-Backend: Deploy trên Render
-Dễ dàng kết nối với MongoDB
-Có SSL miễn phí
-Database: Sử dụng MongoDB
+### 🔧 Database
+- Sử dụng **MongoDB**
 
+---
 
-## Cơ chế
+## 🔄 Cơ chế hoạt động
+
+> 📌 *Bạn nên bổ sung mô tả chi tiết ở đây, ví dụ:*
+- Người dùng upload ảnh hoặc stream video
+- Ảnh được gửi đến backend FastAPI
+- YOLOv8 xử lý và nhận diện phương tiện
+- Kết quả trả về frontend và hiển thị theo thời gian thực
+
+---
 

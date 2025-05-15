@@ -1,3 +1,16 @@
+export enum VehicleClass {
+    CAR = "car",
+    MOTORCYCLE = "motorcycle",
+    BUS = "bus",
+    TRUCK = "truck",
+    BICYCLE = "bicycle"
+}
+
+export interface VehicleFilter {
+    target_classes: VehicleClass[];
+    min_confidence: number;
+}
+
 export interface BoundingBox {
     x1: number;
     y1: number;
@@ -17,6 +30,7 @@ export interface DetectionResult {
     created_at: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     error?: string;
+    filter?: VehicleFilter;
 }
 
 export interface DetectionStats {

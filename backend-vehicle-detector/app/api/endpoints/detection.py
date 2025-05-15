@@ -1,9 +1,12 @@
 import os
-from typing import List
-from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
+from typing import List, Optional
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Query
 from fastapi.responses import FileResponse
 from ...services.detection_service import detection_service
-from ...models.detection import DetectionResult, DetectionTask, DetectionStats
+from ...models.detection import (
+    DetectionResult, DetectionTask, DetectionStats,
+    VehicleClass, VehicleFilter
+)
 from ...core.config import settings
 
 router = APIRouter()
@@ -11,10 +14,20 @@ router = APIRouter()
 @router.post("/image", response_model=DetectionResult)
 async def process_image(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    target_classes: Optional[List[VehicleClass]] = Query(
+        None,
+        description="List of vehicle classes to detect. If not provided, defaults to car and motorcycle."
+    ),
+    min_confidence: float = Query(
+        0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum confidence threshold for detection"
+    )
 ):
     """
-    Upload and process an image for vehicle detection
+    Upload and process an image for vehicle detection with optional filtering
     """
     # Validate file type
     if not file.content_type.startswith('image/'):
@@ -23,6 +36,12 @@ async def process_image(
             detail="File must be an image"
         )
     
+    # Create filter with default values if target_classes is None
+    filter = VehicleFilter(
+        target_classes=set(target_classes) if target_classes is not None else None,
+        min_confidence=min_confidence
+    )
+    
     # Save uploaded file
     file_path = os.path.join(settings.UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
@@ -30,8 +49,8 @@ async def process_image(
         buffer.write(content)
     
     try:
-        # Process image
-        result = detection_service.process_file(file_path)
+        # Process image with filter
+        result = detection_service.process_file(file_path, filter)
         return result
     except Exception as e:
         raise HTTPException(
@@ -45,10 +64,20 @@ async def process_image(
 @router.post("/video", response_model=DetectionResult)
 async def process_video(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    target_classes: Optional[List[VehicleClass]] = Query(
+        None,
+        description="List of vehicle classes to detect. If not provided, defaults to car and motorcycle."
+    ),
+    min_confidence: float = Query(
+        0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum confidence threshold for detection"
+    )
 ):
     """
-    Upload and process a video for vehicle detection
+    Upload and process a video for vehicle detection with optional filtering
     """
     # Validate file type
     if not file.content_type.startswith('video/'):
@@ -57,6 +86,12 @@ async def process_video(
             detail="File must be a video"
         )
     
+    # Create filter with default values if target_classes is None
+    filter = VehicleFilter(
+        target_classes=set(target_classes) if target_classes is not None else None,
+        min_confidence=min_confidence
+    )
+    
     # Save uploaded file
     file_path = os.path.join(settings.UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
@@ -64,8 +99,8 @@ async def process_video(
         buffer.write(content)
     
     try:
-        # Process video
-        result = detection_service.process_file(file_path)
+        # Process video with filter
+        result = detection_service.process_file(file_path, filter)
         return result
     except Exception as e:
         raise HTTPException(

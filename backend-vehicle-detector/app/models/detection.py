@@ -1,6 +1,28 @@
-from typing import List, Optional
+from typing import List, Optional, Set
 from pydantic import BaseModel, Field
 from datetime import datetime
+from enum import Enum
+
+class VehicleClass(str, Enum):
+    """Vehicle classes that can be detected"""
+    CAR = "car"
+    MOTORCYCLE = "motorcycle"
+    BUS = "bus"
+    TRUCK = "truck"
+    BICYCLE = "bicycle"
+
+class VehicleFilter(BaseModel):
+    """Filter for vehicle detection"""
+    target_classes: Optional[Set[VehicleClass]] = Field(
+        default_factory=lambda: {VehicleClass.CAR, VehicleClass.MOTORCYCLE},
+        description="Set of vehicle classes to detect"
+    )
+    min_confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum confidence threshold for detection"
+    )
 
 class BoundingBox(BaseModel):
     """Bounding box coordinates and confidence"""
@@ -22,6 +44,7 @@ class DetectionResult(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of creation")
     status: str = Field(..., description="Processing status: pending/processing/completed/failed")
     error: Optional[str] = Field(None, description="Error message if status is failed")
+    filter: Optional[VehicleFilter] = Field(None, description="Filter applied to detections")
     
     class Config:
         json_encoders = {

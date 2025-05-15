@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { DetectionResult, DetectionTask, DetectionStats, ApiError } from '../types/api';
+import { DetectionResult, DetectionTask, DetectionStats, ApiError, VehicleClass, VehicleFilter } from '../types/api';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
 
@@ -26,9 +26,26 @@ const handleError = (error: AxiosError): ApiError => {
 };
 
 // API functions
-export const uploadImage = async (file: File): Promise<DetectionResult> => {
+export const uploadImage = async (
+    file: File,
+    filter?: VehicleFilter
+): Promise<DetectionResult> => {
     const formData = new FormData();
     formData.append('file', file);
+    
+    // Add filter parameters if provided
+    if (filter) {
+        if (filter.target_classes) {
+            // Convert array to set of unique values
+            const uniqueClasses = Array.from(new Set(filter.target_classes));
+            uniqueClasses.forEach(cls => {
+                formData.append('target_classes', cls);
+            });
+        }
+        if (filter.min_confidence !== undefined) {
+            formData.append('min_confidence', filter.min_confidence.toString());
+        }
+    }
     
     try {
         const response = await client.post<DetectionResult>('/detection/image', formData, {
@@ -42,9 +59,26 @@ export const uploadImage = async (file: File): Promise<DetectionResult> => {
     }
 };
 
-export const uploadVideo = async (file: File): Promise<DetectionResult> => {
+export const uploadVideo = async (
+    file: File,
+    filter?: VehicleFilter
+): Promise<DetectionResult> => {
     const formData = new FormData();
     formData.append('file', file);
+    
+    // Add filter parameters if provided
+    if (filter) {
+        if (filter.target_classes) {
+            // Convert array to set of unique values
+            const uniqueClasses = Array.from(new Set(filter.target_classes));
+            uniqueClasses.forEach(cls => {
+                formData.append('target_classes', cls);
+            });
+        }
+        if (filter.min_confidence !== undefined) {
+            formData.append('min_confidence', filter.min_confidence.toString());
+        }
+    }
     
     try {
         const response = await client.post<DetectionResult>('/detection/video', formData, {

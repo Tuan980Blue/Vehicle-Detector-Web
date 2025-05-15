@@ -1,7 +1,7 @@
 import os
 import time
 import uuid
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Set
 from pathlib import Path
 import cv2
 import numpy as np
@@ -24,7 +24,10 @@ from ultralytics.nn.modules.conv import Conv, Concat
 from ultralytics.nn.modules.block import C2f, Bottleneck, BottleneckCSP, SPP, SPPF, DFL
 from ultralytics.nn.modules.head import Detect
 from ..core.config import settings
-from ..models.detection import DetectionResult, BoundingBox, DetectionTask, DetectionStats
+from ..models.detection import (
+    DetectionResult, BoundingBox, DetectionTask, DetectionStats,
+    VehicleClass, VehicleFilter
+)
 
 # Add required classes to safe globals
 torch.serialization.add_safe_globals([
@@ -66,6 +69,13 @@ class DetectionService:
     def __init__(self):
         self.model = YOLO(settings.MODEL_PATH)
         self.tasks: Dict[str, DetectionTask] = {}
+        self._class_mapping = {
+            "car": VehicleClass.CAR,
+            "motorcycle": VehicleClass.MOTORCYCLE,
+            "bus": VehicleClass.BUS,
+            "truck": VehicleClass.TRUCK,
+            "bicycle": VehicleClass.BICYCLE
+        }
         
     def _create_task(self, filename: str) -> DetectionTask:
         """Create a new detection task"""
@@ -87,8 +97,36 @@ class DetectionService:
             if error:
                 task.error = error
     
-    def _process_image(self, image_path: str) -> Tuple[List[BoundingBox], str]:
-        """Process a single image and return detections and output path"""
+    def _filter_detections(
+        self,
+        detections: List[BoundingBox],
+        filter: Optional[VehicleFilter] = None
+    ) -> List[BoundingBox]:
+        """Filter detections based on vehicle class and confidence"""
+        if not filter:
+            filter = VehicleFilter()  # Use default filter
+            
+        filtered_detections = []
+        for det in detections:
+            # Convert class name to VehicleClass enum
+            try:
+                vehicle_class = self._class_mapping[det.class_name.lower()]
+            except KeyError:
+                continue  # Skip unknown classes
+                
+            # Apply filters
+            if (filter.target_classes is None or vehicle_class in filter.target_classes) and \
+               det.confidence >= filter.min_confidence:
+                filtered_detections.append(det)
+                
+        return filtered_detections
+
+    def _process_image(
+        self,
+        image_path: str,
+        filter: Optional[VehicleFilter] = None
+    ) -> Tuple[List[BoundingBox], str]:
+        """Process a single image and return filtered detections and output path"""
         # Run inference
         results = self.model(
             image_path,
@@ -110,14 +148,26 @@ class DetectionService:
                 class_name=results.names[int(box.cls[0])]
             ))
         
-        # Draw detections on image
+        # Apply filters
+        filtered_detections = self._filter_detections(detections, filter)
+        
+        # Draw filtered detections on image
         img = cv2.imread(image_path)
-        for det in detections:
+        for det in filtered_detections:
+            # Use different colors for different vehicle classes
+            color = {
+                VehicleClass.CAR: (0, 255, 0),      # Green
+                VehicleClass.MOTORCYCLE: (255, 0, 0), # Blue
+                VehicleClass.BUS: (0, 0, 255),      # Red
+                VehicleClass.TRUCK: (255, 255, 0),   # Cyan
+                VehicleClass.BICYCLE: (255, 0, 255)  # Magenta
+            }.get(self._class_mapping[det.class_name.lower()], (0, 255, 0))
+            
             cv2.rectangle(
                 img,
                 (int(det.x1), int(det.y1)),
                 (int(det.x2), int(det.y2)),
-                (0, 255, 0),
+                color,
                 2
             )
             cv2.putText(
@@ -126,19 +176,23 @@ class DetectionService:
                 (int(det.x1), int(det.y1) - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
-                (0, 255, 0),
+                color,
                 2
             )
         
-        # Save processed image tttt
+        # Save processed image
         output_filename = f"processed_{Path(image_path).name}"
         output_path = os.path.join(settings.OUTPUT_DIR, output_filename)
         cv2.imwrite(output_path, img)
         
-        return detections, output_filename
+        return filtered_detections, output_filename
     
-    def _process_video(self, video_path: str) -> Tuple[List[BoundingBox], str]:
-        """Process a video and return detections and output path"""
+    def _process_video(
+        self,
+        video_path: str,
+        filter: Optional[VehicleFilter] = None
+    ) -> Tuple[List[BoundingBox], str]:
+        """Process a video and return filtered detections and output path"""
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise ValueError("Could not open video file")
@@ -184,14 +238,27 @@ class DetectionService:
                     class_name=results.names[int(box.cls[0])]
                 )
                 frame_detections.append(det)
-                all_detections.append(det)
+            
+            # Apply filters
+            filtered_detections = self._filter_detections(frame_detections, filter)
+            all_detections.extend(filtered_detections)
+            
+            # Draw filtered detections on frame
+            for det in filtered_detections:
+                # Use different colors for different vehicle classes
+                color = {
+                    VehicleClass.CAR: (0, 255, 0),      # Green
+                    VehicleClass.MOTORCYCLE: (255, 0, 0), # Blue
+                    VehicleClass.BUS: (0, 0, 255),      # Red
+                    VehicleClass.TRUCK: (255, 255, 0),   # Cyan
+                    VehicleClass.BICYCLE: (255, 0, 255)  # Magenta
+                }.get(self._class_mapping[det.class_name.lower()], (0, 255, 0))
                 
-                # Draw detection on frame
                 cv2.rectangle(
                     frame,
                     (int(det.x1), int(det.y1)),
                     (int(det.x2), int(det.y2)),
-                    (0, 255, 0),
+                    color,
                     2
                 )
                 cv2.putText(
@@ -200,7 +267,7 @@ class DetectionService:
                     (int(det.x1), int(det.y1) - 10),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
-                    (0, 255, 0),
+                    color,
                     2
                 )
             
@@ -222,8 +289,12 @@ class DetectionService:
         
         return all_detections, output_filename
     
-    def process_file(self, file_path: str) -> DetectionResult:
-        """Process an image or video file"""
+    def process_file(
+        self,
+        file_path: str,
+        filter: Optional[VehicleFilter] = None
+    ) -> DetectionResult:
+        """Process an image or video file with optional filtering"""
         start_time = time.time()
         task = self._create_task(Path(file_path).name)
         task_id = task.task_id
@@ -235,9 +306,9 @@ class DetectionService:
             is_video = file_path.lower().endswith(('.mp4', '.avi', '.mov'))
             
             if is_video:
-                detections, output_filename = self._process_video(file_path)
+                detections, output_filename = self._process_video(file_path, filter)
             else:
-                detections, output_filename = self._process_image(file_path)
+                detections, output_filename = self._process_image(file_path, filter)
             
             # Calculate processing time
             processing_time = time.time() - start_time
@@ -249,7 +320,8 @@ class DetectionService:
                 processed_filename=output_filename,
                 detections=detections,
                 processing_time=processing_time,
-                status="completed"
+                status="completed",
+                filter=filter
             )
             
             # Update task with result
@@ -259,8 +331,7 @@ class DetectionService:
             return result
             
         except Exception as e:
-            error_msg = str(e)
-            self._update_task_status(task_id, "failed", error_msg)
+            self._update_task_status(task_id, "failed", str(e))
             raise
     
     def get_task_status(self, task_id: str) -> Optional[DetectionTask]:

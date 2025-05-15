@@ -13,6 +13,8 @@ import {
     ListItemIcon,
     ListItemText,
     Paper,
+    Chip,
+    Stack,
 } from '@mui/material';
 import {
     Download as DownloadIcon,
@@ -22,8 +24,9 @@ import {
     LocalShipping as TruckIcon,
     DirectionsBus as BusIcon,
     Timer as TimerIcon,
+    PedalBike as BicycleIcon,
 } from '@mui/icons-material';
-import { DetectionResult as DetectionResultType, DetectionStats } from '../types/api';
+import { DetectionResult as DetectionResultType, DetectionStats, VehicleClass } from '../types/api';
 import { getDownloadUrl } from '../api/client';
 
 interface DetectionResultProps {
@@ -32,13 +35,22 @@ interface DetectionResultProps {
     isLoading?: boolean;
 }
 
+// Map class names to colors (matching backend colors)
+const classColors: Record<string, string> = {
+    [VehicleClass.CAR]: '#00FF00',        // Green
+    [VehicleClass.MOTORCYCLE]: '#FF0000', // Blue
+    [VehicleClass.BUS]: '#0000FF',        // Red
+    [VehicleClass.TRUCK]: '#FFFF00',      // Cyan
+    [VehicleClass.BICYCLE]: '#FF00FF',    // Magenta
+};
+
 // Map class names to icons
 const classIcons: Record<string, React.ReactElement> = {
-    person: React.createElement(PersonIcon),
-    car: React.createElement(CarIcon),
-    motorcycle: React.createElement(MotorcycleIcon),
-    truck: React.createElement(TruckIcon),
-    bus: React.createElement(BusIcon),
+    [VehicleClass.CAR]: React.createElement(CarIcon),
+    [VehicleClass.MOTORCYCLE]: React.createElement(MotorcycleIcon),
+    [VehicleClass.BUS]: React.createElement(BusIcon),
+    [VehicleClass.TRUCK]: React.createElement(TruckIcon),
+    [VehicleClass.BICYCLE]: React.createElement(BicycleIcon),
 };
 
 // Format class names for display
@@ -119,88 +131,83 @@ const DetectionResult: React.FunctionComponent<DetectionResultProps> = ({ result
                         </Box>
                     </Grid>
 
-                    {/* Stats */}
+                    {/* Stats and Info */}
                     <Grid item xs={12} md={4}>
-                        <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default' }}>
-                            <Typography variant="h6" component="div" gutterBottom>
-                                <>Detection Results</>
-                            </Typography>
-                            
-                            {/* Processing Time */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <TimerIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                                <Typography variant="body1" component="div">
-                                    <>Processing Time: {stats?.processing_time.toFixed(2)}s</>
+                        <Stack spacing={2}>
+                            {/* Filter Info */}
+                            {result.filter && result.filter.target_classes && (
+                                <Box>
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        Detection Settings
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                                        Vehicle Classes:
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                        {Array.from(result.filter.target_classes).map(cls => (
+                                            <Chip
+                                                key={cls}
+                                                icon={classIcons[cls]}
+                                                label={formatClassName(cls)}
+                                                sx={{
+                                                    bgcolor: classColors[cls],
+                                                    color: 'white',
+                                                    '& .MuiChip-icon': { color: 'white' }
+                                                }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                        Min Confidence: {result.filter.min_confidence.toFixed(2)}
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {/* Detection Stats */}
+                            {stats && (
+                                <Box>
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        Detection Statistics
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Total Vehicles: {stats.total_vehicles}
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                                        {Object.entries(stats.by_class).map(([cls, count]) => (
+                                            <Chip
+                                                key={cls}
+                                                icon={classIcons[cls]}
+                                                label={`${formatClassName(cls)}: ${count}`}
+                                                sx={{
+                                                    bgcolor: classColors[cls],
+                                                    color: 'white',
+                                                    '& .MuiChip-icon': { color: 'white' }
+                                                }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                        Processing Time: {stats.processing_time.toFixed(2)}s
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {/* File Info */}
+                            <Box>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    File Information
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Original: {result.filename}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Processed: {result.processed_filename}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Status: {result.status}
                                 </Typography>
                             </Box>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            {/* Detection Counts */}
-                            <Typography variant="subtitle1" component="div" gutterBottom>
-                                <>Objects Detected:</>
-                            </Typography>
-                            <List dense>
-                                {Object.entries(detectionsByClass).map(([className, count]) => (
-                                    <ListItem key={className}>
-                                        <ListItemIcon>
-                                            {classIcons[className] || React.createElement(CarIcon)}
-                                        </ListItemIcon>
-                                        <ListItemText
-                                            primary={<>{`${formatClassName(className)}: ${count}`}</>}
-                                            secondary={<>{`Confidence: ${Math.max(
-                                                ...result.detections
-                                                    .filter(d => d.class_name === className)
-                                                    .map(d => d.confidence)
-                                            ).toFixed(2)}`}</>}
-                                        />
-                                    </ListItem>
-                                ))}
-                            </List>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            {/* Summary */}
-                            <Typography variant="subtitle1" component="div" gutterBottom>
-                                <>Summary:</>
-                            </Typography>
-                            <List dense>
-                                <ListItem>
-                                    <ListItemText
-                                        primary={<>"Total Objects"</>}
-                                        secondary={<>{result.detections.length}</>}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText
-                                        primary={<>"Total Vehicles"</>}
-                                        secondary={<>{result.detections.filter(
-                                            d => d.class_name !== 'person'
-                                        ).length}</>}
-                                    />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText
-                                        primary={<>"Total People"</>}
-                                        secondary={<>{result.detections.filter(
-                                            d => d.class_name === 'person'
-                                        ).length}</>}
-                                    />
-                                </ListItem>
-                            </List>
-
-                            <Box sx={{ mt: 2 }}>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<DownloadIcon />}
-                                    href={processedUrl}
-                                    download
-                                    fullWidth
-                                >
-                                    <>Download Result</>
-                                </Button>
-                            </Box>
-                        </Paper>
+                        </Stack>
                     </Grid>
                 </Grid>
             </CardContent>

@@ -35,17 +35,23 @@ export const uploadImage = async (
     
     // Add filter parameters if provided
     if (filter) {
-        if (filter.target_classes) {
-            // Convert array to set of unique values
+        console.log('Filter before sending:', filter); // Debug log
+        if (filter.target_classes && Array.isArray(filter.target_classes) && filter.target_classes.length > 0) {
+            // Convert array to set of unique values and send as JSON string
             const uniqueClasses = Array.from(new Set(filter.target_classes));
-            uniqueClasses.forEach(cls => {
-                formData.append('target_classes', cls);
-            });
+            console.log('Unique classes to send:', uniqueClasses); // Debug log
+            formData.append('target_classes', JSON.stringify(uniqueClasses));
         }
         if (filter.min_confidence !== undefined) {
             formData.append('min_confidence', filter.min_confidence.toString());
         }
     }
+    
+    // Debug log for FormData contents
+    console.log('FormData contents:');
+    Array.from(formData.entries()).forEach(([key, value]) => {
+        console.log(key, value);
+    });
     
     try {
         const response = await client.post<DetectionResult>('/detection/image', formData, {
@@ -53,8 +59,10 @@ export const uploadImage = async (
                 'Content-Type': 'multipart/form-data',
             },
         });
+        console.log('Response data:', response.data); // Debug log
         return response.data;
     } catch (error) {
+        console.error('Upload error:', error); // Debug log
         throw handleError(error as AxiosError);
     }
 };

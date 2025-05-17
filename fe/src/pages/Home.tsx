@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Typography, Alert } from '@mui/material';
+import { Container, Typography, Alert, Box } from '@mui/material';
 import { useQuery } from 'react-query';
 import { FileUpload } from '../components/FileUpload';
 import { DetectionResult as DetectionResultComponent } from '../components/DetectionResult';
@@ -11,6 +11,7 @@ import {
     getTaskResult,
     getDetectionStats,
 } from '../api/client';
+import { Image } from "@mui/icons-material";
 
 export const Home = () => {
     const [currentResult, setCurrentResult] = useState<DetectionResult | null>(null);
@@ -77,11 +78,38 @@ export const Home = () => {
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                <>Vehicle Detection</>
-            </Typography>
-            <Typography variant="body1" color="text.secondary" component="div" paragraph>
-                <>Upload an image or video to detect vehicles using YOLOv8</>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <img src="/logo2.png" alt="Logo" style={{ height: '40px' }} />
+                <Typography 
+                    variant="h4" 
+                    component="h1"
+                    sx={{
+                        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                        backgroundClip: 'text',
+                        textFillColor: 'transparent',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
+                        textShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+                        position: 'relative',
+                        '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: '-4px',
+                            left: 0,
+                            width: '100%',
+                            height: '2px',
+                            background: 'linear-gradient(90deg, #2196F3, #21CBF3)',
+                            borderRadius: '2px',
+                        }
+                    }}
+                >
+                    Vehicle Detection
+                </Typography>
+            </Box>
+            <Typography variant="body1" color="text.secondary" paragraph>
+                Upload an image or video to detect vehicles using YOLOv8
             </Typography>
 
             <FileUpload
@@ -91,7 +119,7 @@ export const Home = () => {
 
             {error && (
                 <Alert severity="error" sx={{ mt: 2 }}>
-                    <>{error}</>
+                    {error}
                 </Alert>
             )}
 

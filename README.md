@@ -1,3 +1,9 @@
+## 🌍 [Xem bản demo tại đây](https://anhtuandev.id.vn/)
+
+**Vehicle Detector** là một nền tảng nhận diện phương tiện thời gian thực được xây dựng bằng **FastAPI** kết hợp với **YOLOv8**, cho phép người dùng phân loại phương tiện, hiển thị thông tin chi tiết và cập nhật kết quả gần như ngay lập tức.
+
+---
+
 # 🌐 Vehicle-Detector-Web
 
 <p align="center">
@@ -5,12 +11,6 @@
   <img src="https://github.com/user-attachments/assets/5a59ab9e-5116-4adf-a13a-d9634e82fa39" width="500"/>
 </p>
 
-
-## 🌍 [Xem bản demo tại đây](https://anhtuandev.id.vn/)
-
-**Vehicle Detector** là một nền tảng nhận diện phương tiện thời gian thực được xây dựng bằng **FastAPI** kết hợp với **YOLOv8**, cho phép người dùng phân loại phương tiện, hiển thị thông tin chi tiết và cập nhật kết quả gần như ngay lập tức.
-
----
 
 ## 🚀 Tính năng nổi bật
 

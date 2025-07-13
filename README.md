@@ -15,7 +15,6 @@
 ## 🚀 Tính năng nổi bật
 
 - ⚡ **Nhận diện thời gian thực** – Phản hồi và hiện thị kết quả được cập nhật ngay lập tức.
-- 🔒 **Xác thực người dùng** – Bảo mật truy cập và dữ liệu.
 - 📱 **Giao diện thân thiện, Responsive** – Hiển thị tốt trên cả desktop và thiết bị di động.
 
 ---
